@@ -1,14 +1,22 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Rocket : MonoBehaviour {
 
     [SerializeField]
     private float rotationCS = 100;
 
+    private enum State {
+        TRANSCENDING,
+        ALIVE,
+        DYING
+    }
+
     [SerializeField]
     private float flyCS = 100;
     private Rigidbody rocket;
     private AudioSource audioSource;
+    private State gameState = State.ALIVE;
 
     // Start is called before the first frame update
     void Start() {
@@ -18,8 +26,12 @@ public class Rocket : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        ProcessFly();
-        ProcessRotation();
+        if (gameState == State.ALIVE) {
+            ProcessFly();
+            ProcessRotation();
+        } else if (audioSource.isPlaying) {
+            audioSource.Stop();
+        }
     }
 
     private void ProcessRotation() {
@@ -40,14 +52,33 @@ public class Rocket : MonoBehaviour {
     }
 
     void OnCollisionEnter(Collision other) {
+        if (gameState != State.ALIVE) {
+            return;
+        }
+
         switch (other.gameObject.tag) {
             case "Friendly" : 
                 print("ok");
                 break;
+            case "Finish" : 
+                gameState = State.TRANSCENDING;
+                Invoke("LoadNextScene", 1f);
+                break;
             default:
-                print("dead");
+                gameState = State.DYING;
+                Invoke("LoadFirstScene", 1f);
                 break;
         }
+    }
+
+    private void LoadNextScene() {
+        SceneManager.LoadScene((SceneManager.GetActiveScene().buildIndex + 1) % SceneManager.sceneCountInBuildSettings);
+        gameState = State.ALIVE;
+    }
+
+    private void LoadFirstScene() {
+        SceneManager.LoadScene(0);
+        gameState = State.ALIVE;
     }
 
     private void ProcessFly() {

@@ -87,5 +87,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Finish Pad Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 3216771738001920299, guid: bc1cbb11bd5cafc499f3cbdf3e9c7461,
+        type: 3}
+      propertyPath: m_TagString
+      value: Finish
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bc1cbb11bd5cafc499f3cbdf3e9c7461, type: 3}
