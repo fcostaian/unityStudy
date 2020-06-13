@@ -3,17 +3,23 @@ using UnityEngine.SceneManagement;
 
 public class Rocket : MonoBehaviour {
 
-    [SerializeField]
-    private float rotationCS = 100;
+    [SerializeField] private float rotationCS;
+    [SerializeField] private float flyCS = 600;
+    [SerializeField] private AudioClip flyingAudio;
+    [SerializeField] private AudioClip winningAudio;
+    [SerializeField] private AudioClip losingAudio;
+    
+    [SerializeField] private ParticleSystem flyingParticle;
+    [SerializeField] private ParticleSystem winningParticle;
+    [SerializeField] private ParticleSystem losingParticle;
+
+    [SerializeField] private float levelLoadDelay = 2f;
 
     private enum State {
         TRANSCENDING,
         ALIVE,
         DYING
     }
-
-    [SerializeField]
-    private float flyCS = 100;
     private Rigidbody rocket;
     private AudioSource audioSource;
     private State gameState = State.ALIVE;
@@ -29,8 +35,6 @@ public class Rocket : MonoBehaviour {
         if (gameState == State.ALIVE) {
             ProcessFly();
             ProcessRotation();
-        } else if (audioSource.isPlaying) {
-            audioSource.Stop();
         }
     }
 
@@ -62,11 +66,17 @@ public class Rocket : MonoBehaviour {
                 break;
             case "Finish" : 
                 gameState = State.TRANSCENDING;
-                Invoke("LoadNextScene", 1f);
+                print("Win");
+                winningParticle.Play();
+                PlayAudio(winningAudio);
+                Invoke("LoadNextScene", levelLoadDelay);
                 break;
             default:
                 gameState = State.DYING;
-                Invoke("LoadFirstScene", 1f);
+                print("Lose");
+                losingParticle.Play();
+                PlayAudio(losingAudio);
+                Invoke("LoadFirstScene", levelLoadDelay);
                 break;
         }
     }
@@ -74,22 +84,37 @@ public class Rocket : MonoBehaviour {
     private void LoadNextScene() {
         SceneManager.LoadScene((SceneManager.GetActiveScene().buildIndex + 1) % SceneManager.sceneCountInBuildSettings);
         gameState = State.ALIVE;
+        winningParticle.Stop();
     }
 
     private void LoadFirstScene() {
         SceneManager.LoadScene(0);
         gameState = State.ALIVE;
+        losingParticle.Stop();
     }
 
     private void ProcessFly() {
-        float flySpeed = flyCS * Time.deltaTime * 10;
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            flyingParticle.Play();
+        }
         if (Input.GetKey(KeyCode.Space)) {
-            rocket.AddRelativeForce(Vector3.up * flySpeed);
+            rocket.AddRelativeForce(Vector3.up * flyCS * Time.deltaTime);
+            PlayAudio(flyingAudio);
+        } else if (Input.GetKeyUp(KeyCode.Space)){
+            flyingParticle.Stop();
+            StopAudio(flyingAudio);
+        }
+    }
 
-            if (!audioSource.isPlaying) {
-                audioSource.Play();
-            }
-        } else {
+    private void PlayAudio (AudioClip audio) {
+        if (!audioSource.isPlaying || audio != flyingAudio) {
+            audioSource.Stop();
+            audioSource.PlayOneShot(audio);
+        }
+    }
+
+    private void StopAudio (AudioClip audio) {
+        if (audioSource.isPlaying && audio == flyingAudio) {
             audioSource.Stop();
         }
     }
