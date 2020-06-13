@@ -2,7 +2,7 @@
 using UnityEngine.SceneManagement;
 
 public class Rocket : MonoBehaviour {
-
+    private bool coolisionOn = true;
     [SerializeField] private float rotationCS;
     [SerializeField] private float flyCS = 600;
     [SerializeField] private AudioClip flyingAudio;
@@ -32,15 +32,30 @@ public class Rocket : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
+
+        if (Debug.isDebugBuild) {
+            DebugCommands();
+        }
+
         if (gameState == State.ALIVE) {
             ProcessFly();
             ProcessRotation();
         }
     }
 
+    private void DebugCommands() {
+        if (Input.GetKey(KeyCode.L)) {
+            LoadNextScene();
+        }
+
+        if (Input.GetKey(KeyCode.C)) {
+            coolisionOn = !coolisionOn;
+        }
+    }
+
     private void ProcessRotation() {
 
-        rocket.freezeRotation = true;
+        rocket.angularVelocity = Vector3.zero;
 
         float rotationSpeed = rotationCS * Time.deltaTime;
 
@@ -51,12 +66,10 @@ public class Rocket : MonoBehaviour {
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) {
             transform.Rotate(-Vector3.forward * rotationSpeed);
         }
-
-        rocket.freezeRotation = false;
     }
 
     void OnCollisionEnter(Collision other) {
-        if (gameState != State.ALIVE) {
+        if (gameState != State.ALIVE || !coolisionOn) {
             return;
         }
 
